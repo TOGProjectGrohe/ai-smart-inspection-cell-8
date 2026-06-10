@@ -27,9 +27,10 @@ col_cam, col_result = st.columns([3, 2])
 
 with col_cam:
     st.subheader("📸 ข้อ 4: ทดสอบการทำงานของระบบกล้อง")
+    st.caption("💡 แนะนำสำหรับพนักงาน: หากกล้องเปิดมาเป็นกล้องหน้าโน้ตบุ๊ก ให้กดไอคอนหรือปุ่มสลับกล้องที่ตัวรับภาพด้านล่างเพื่อเปลี่ยนเป็นกล้อง USB ของ IT ได้ทันที")
     
     # ดึงฟังก์ชันกล้องเว็บแคมผ่านระบบเบราว์เซอร์ของ Streamlit Direct
-    # ตัวนี้พอนำขึ้นระบบ share.streamlit.io จะเปิดใช้งานกล้องของโน้ตบุ๊กพี่ได้ทันที
+    # รองรับการดึงสัญญาณภาพและเปิดโอกาสให้เลือกสลับไปกล้องภายนอก (External USB Camera) ได้จากหน้าเว็บ
     cam_image = st.camera_input("ส่องกล้องลงไปที่ก้นกล่องบรรจุชิ้นงานเพื่อทดสอบสัญญาณภาพ")
     
     if cam_image:
@@ -55,27 +56,27 @@ with col_result:
             
     st.write("---")
     
-    # แสดงสัญญาณไฟอุตสาหกรรมบนแดชบอร์ด
+    # แสดงสัญญาณไฟอุตสาหกรรมบนแดชบอร์ด (แก้ไขปัญหาความผิดพลาดเป็น unsafe_allow_html=True เรียบร้อย)
     if st.session_state.sim_status == "OK":
         st.markdown(
             "<div style='background-color:#11caa0; padding:20px; border-radius:10px; text-align:center;'>"
             "<h1 style='color:white; margin:0;'>PASS (OK)</h1>"
             "<p style='color:white; margin:0; font-size:18px;'>ชิ้นงานวางครบถ้วนตาม Standard</p>"
-            "</div>", unsafe_style_allowed=True
+            "</div>", unsafe_allow_html=True
         )
     elif st.session_state.sim_status == "NG":
         st.markdown(
             "<div style='background-color:#ef4444; padding:20px; border-radius:10px; text-align:center;'>"
             "<h1 style='color:white; margin:0;'>REJECT (NG) 🚨</h1>"
             "<p style='color:white; margin:0; font-size:18px;'>ตรวจพบสิ่งผิดปกติ! สินค้าไม่ครบ 5 ชิ้น</p>"
-            "</div>", unsafe_style_allowed=True
+            "</div>", unsafe_allow_html=True
         )
     else:
         st.markdown(
             "<div style='background-color:#64748b; padding:20px; border-radius:10px; text-align:center;'>"
             "<h1 style='color:white; margin:0;'>SYSTEM READY</h1>"
             "<p style='color:white; margin:0; font-size:18px;'>รอกล่องถัดไปเข้าจุดสแกนภาพ</p>"
-            "</div>", unsafe_style_allowed=True
+            "</div>", unsafe_allow_html=True
         )
 
     st.write("")
@@ -85,8 +86,8 @@ with col_result:
     st.write("**สถานะการแยกแยะชิ้นงานย่อย:**")
     for item in TARGET_CLASSES:
         if st.session_state.sim_status == "OK":
-            st.markdown(f"🔹 {item}: <span style='color:#11caa0; font-weight:bold;'>Detected</span>", unsafe_style_allowed=True)
+            st.markdown(f"🔹 {item}: <span style='color:#11caa0; font-weight:bold;'>Detected</span>", unsafe_allow_html=True)
         elif st.session_state.sim_status == "NG" and "O-Ring" in item:
-            st.markdown(f"🔹 {item}: <span style='color:#ef4444; font-weight:bold;'>Missing / Occluded (โดนบัง)</span>", unsafe_style_allowed=True)
+            st.markdown(f"🔹 {item}: <span style='color:#ef4444; font-weight:bold;'>Missing / Occluded (โดนบัง)</span>", unsafe_allow_html=True)
         else:
             st.write(f"🔹 {item}: Standby...")
