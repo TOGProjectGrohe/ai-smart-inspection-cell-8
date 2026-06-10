@@ -8,22 +8,12 @@ from PIL import Image
 # ------------------------------------------------------------------
 st.set_page_config(page_title="AI Smart Inspection POC", layout="wide")
 
-# ไอเทมจำลอง 5 ชิ้นปราบเซียนของพี่
 TARGET_CLASSES = ["Manual (คู่มือ)", "Black Tag (ป้ายดำ)", "Red Tag (ป้ายแดง)", "O-Ring (โอริง)", "Filter (ไส้กรอง)"]
 
 if "sim_status" not in st.session_state:
     st.session_state.sim_status = "READY"
 if "sim_count" not in st.session_state:
     st.session_state.sim_count = 0
-
-# ==================================================================
-# ⚙️ [จุดเปลี่ยนเลขกล้องอยู่ตรงนี้ครับพี่!] 
-# ==================================================================
-# ปกติกล้องติดโน้ตบุ๊กจะเป็นเลข 0
-# พอนำกล้อง IT มาเสียบพอร์ต USB เพิ่ม คอมพิวเตอร์จะมองเป็นเลข 1 หรือ 2
-# สลับใช้กล้อง USB: เปลี่ยนจาก 0 เป็น 1 (หรือ 2 ถ้ายังไม่ขึ้น) ได้เลยครับพี่!
-CAMERA_INDEX = 2 
-# ==================================================================
 
 # ------------------------------------------------------------------
 # UI DESIGN: DASHBOARD
@@ -36,35 +26,60 @@ col_cam, col_result = st.columns([3, 2])
 
 with col_cam:
     st.subheader("📸 ข้อ 4: ทดสอบการทำงานของระบบกล้อง")
-    st.info(f"⚡ กำลังดึงภาพจากกล้อง Hardware หมายเลข: {CAMERA_INDEX} (ผ่าน OpenCV)")
     
-    # ปุ่มควบคุมสวิตช์ เปิด-ปิด สตรีมวิดีโอ
-    run_cam = st.checkbox("🔌 เปิดระบบดึงสัญญาณภาพจากพอร์ตกล้องจริง", value=True)
-    FRAME_WINDOW = st.image([]) # ตัวสร้างหน้าต่างรอรับเฟรมภาพสด
+    # ------------------------------------------------------------------
+    # 🛠️ [แผนรบใหม่] ใช้ HTML5 Video + JavaScript บังคับให้เบราว์เซอร์เปิดหน้าต่างสลับกล้อง
+    # ------------------------------------------------------------------
+    st.markdown("### 📽️ หน้าต่างดึงภาพจากกล้องหน้างาน")
+    st.caption("💡 **วิธีแก้ปัญหากล้องนิ่ง:** เมื่อกดปุ่ม 'เปิดกล้องอุตสาหกรรม' แล้ว หากภาพยังเป็นกล้องหน้าโน้ตบุ๊ก ให้พนักงานคลิกปุ่มสลับกล้องที่จอกล้องได้เลย ระบบจะบังคับตัดสลับไปกล้อง USB ทันที")
     
-    if run_cam:
-        # เปิดดึงภาพจากเลขกล้องที่ตั้งไว้ด้านบนตรง ๆ 
-        cap = cv2.VideoCapture(CAMERA_INDEX)
-        
-        # ปรับความละเอียดวิดีโอให้ชัดกระแทกตาพนักงาน
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-        
-        # ลูปจับภาพสดพ่นขึ้นหน้าจอแบบ Real-time
-        if cap.isOpened():
-            ret, frame = cap.read()
-            if ret:
-                # แปลงรหัสสีจากฟอร์แมตดิบ OpenCV (BGR) เป็นฟอร์แมตสากล (RGB)
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                FRAME_WINDOW.image(frame, caption="Live Stream ส่องก้นกล่องแบบเรียลไทม์")
-                st.success("🟢 สัญญาณภาพจากกล้อง Hardware ทำงานปกติ!")
-            else:
-                st.error("🚨 สัญญาณภาพหลุด! โปรดตรวจสอบว่ามีโปรแกรมอื่นแอบเปิดกล้องตัวนี้อยู่ไหม")
-            cap.release()
-        else:
-            st.error(f"❌ คอมพิวเตอร์ค้นหา กล้องหมายเลข [{CAMERA_INDEX}] ไม่เจอ! (โปรดเปลี่ยนตัวเลข CAMERA_INDEX ในโค้ดเป็น 0 หรือ 2 แล้วกดเซฟใหม่ครับพี่)")
-    else:
-        st.warning("⏸️ สวิตช์กล้องปิดอยู่")
+    # ฝังระบบเครื่องเล่นวิดีโอแบบเลือกกล้องได้เองลงหน้าเว็บ ไม่ต้องง้อสิทธิ์รากเบราว์เซอร์
+    html_camera_script = """
+    <div style="text-align:center;">
+        <video id="webcam" autoplay playsinline width="100%" style="border-radius:10px; background:#333; max-width:640px; min-height:480px;"></video>
+        <br><br>
+        <button id="btn-toggle" style="padding:10px 20px; font-size:16px; background-color:#11caa0; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">📸 เปิดกล้องอุตสาหกรรม</button>
+        <button id="btn-switch" style="padding:10px 20px; font-size:16px; background-color:#3b82f6; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold; margin-left:10px;">🔄 สลับไปกล้อง USB ตัวนอก</button>
+    </div>
+
+    <script>
+        const video = document.getElementById('webcam');
+        const btnToggle = document.getElementById('btn-toggle');
+        const btnSwitch = document.getElementById('btn-switch');
+        let currentStream = null;
+        let useFacingMode = "user"; // เริ่มต้นที่กล้องหน้า
+
+        async function startWebcam(facingMode) {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+            try {
+                // บังคับให้เบราว์เซอร์ควานหาอุปกรณ์กล้องทั้งหมด
+                const constraints = {
+                    video: { facingMode: facingMode, width: 640, height: 480 }
+                };
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = currentStream;
+            } catch (err) {
+                console.error("Error accessing webcam: ", err);
+                alert("ไม่สามารถเข้าถึงกล้องได้ โปรดตรวจสอบการต่อสาย USB หรือกดอนุญาตสิทธิ์กล้องที่มุมบนเว็บครับพี่");
+            }
+        }
+
+        btnToggle.addEventListener('click', () => {
+            startWebcam(useFacingMode);
+        });
+
+        btnSwitch.addEventListener('click', async () => {
+            // ทริคเด็ด: สั่งสลับ Mode การดึงกล้อง จากกล้องหน้า (user) เป็นกล้องนอก/กล้องหลัง (environment)
+            useFacingMode = (useFacingMode === "user") ? "environment" : "user";
+            await startWebcam(useFacingMode);
+        });
+    </script>
+    """
+    
+    # รันโค้ดสลับกล้องทะลวงบล็อกเบราว์เซอร์
+    st.components.v1.html(html_camera_script, height=560)
 
 with col_result:
     st.subheader("📊 ข้อ 5: ทดสอบตรรกะระบบ ผิด-ถูก (OK/NG)")
@@ -86,7 +101,6 @@ with col_result:
             
     st.write("---")
     
-    # แสดงสัญญาณไฟอุตสาหกรรมบนแดชบอร์ด
     if st.session_state.sim_status == "OK":
         st.markdown(
             "<div style='background-color:#11caa0; padding:20px; border-radius:10px; text-align:center;'>"
@@ -112,7 +126,6 @@ with col_result:
     st.write("")
     st.metric(label="จำนวนวัตถุที่ระบบนับได้ในกล่อง", value=f"{st.session_state.sim_count} / 5 ชิ้น")
     
-    # แสดงรายการสถานะไอเทมรายชิ้น
     st.write("**สถานะการแยกแยะชิ้นงานย่อย:**")
     for item in TARGET_CLASSES:
         if st.session_state.sim_status == "OK":
