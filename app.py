@@ -4,13 +4,13 @@ from PIL import Image
 from roboflow import Roboflow
 
 # ==================================================================
-# 🚨 [โน้ตหัวข้อสำคัญ] จุดที่พี่วิรัตน์เปลี่ยน WORDING ให้ตรงเรียบร้อยแล้ว 🚨
+# 🔴 [โน้ตหัวข้อสำคัญ] จุดที่เปลี่ยน WORDING ให้ตรงกับการเทรนจริง 🔴
 # ==================================================================
 # ✅ จุดที่ 1: หยอด Private API Key ของจริงเรียบร้อย (rf_E8O0kMpxK...)
-# ✅ จุดที่ 2: ชื่อโปรเจกต์ตรงตามฐานข้อมูลหน้าเว็บแล้ว ("test11-domtn")
+# ✅ จุดที่ 2: ชื่อโปรเจกต์ตรงตามคลังฐานข้อมูลแล้ว ("test11-domtn")
 # ✅ จุดที่ 3: ดึงสมองกลเวอร์ชันล่าสุดเรียบร้อยแล้ว (.version(5))
-# ✅ จุดที่ 4: ตั้งค่ากลุ่มคลาสเป็นปากกาจริงตรงตัวแล้ว ["Pink", "Green"]
-# 🛠️ [จุดแก้ไขใหม่]: เพิ่มตรรกะแยกแยะตัวหนังสือชื่อคลาสบนรูปภาพ และตรวจเช็กสีห้ามซ้ำซ้อน
+# ✅ จุดที่ 4: ตั้งค่ากลุ่มคลาสเป้าหมายเป็นปากกาจริงแล้ว ["Pink", "Green"]
+# 🛠️ [ตรรกะใหม่]: ปรับ Wording การตรวจเช็กสีห้ามซ้ำซ้อน ดักทางพนักงานโกงยัดสีเดิมมา 2 แท่ง
 # ==================================================================
 
 # CONFIGURATION & INITIALIZATION
@@ -20,7 +20,7 @@ st.set_page_config(page_title="AI Smart Inspection v5", layout="wide")
 @st.cache_resource
 def init_roboflow_model():
     try:
-        # พี่วิรัตน์หยอดคีย์ลับเชื่อมต่อเสร็จสมบูรณ์เรียบร้อยครับ!
+        # 🔴 [จุดเปลี่ยนที่ 1-3]: หยอดรหัสกุญแจลับ และเลขเวอร์ชัน 5 ตัวล่าสุดเรียบร้อยแล้ว
         rf = Roboflow(api_key="rf_E8O0kMpxKZXtOz2ol6VsvabOJgo1") 
         project = rf.workspace().project("test11-domtn")
         model = project.version(5).model
@@ -31,7 +31,8 @@ def init_roboflow_model():
 
 model = init_roboflow_model()
 
-# ตัวแปรคลาสเป้าหมายพจนานุกรม AI
+# 🔴 [จุดเปลี่ยนที่ 4]: ตัวแปรกลุ่มคลาสเป้าหมาย เปลี่ยน Wording ให้แมตช์กับปากกาจริงเป๊ะๆ
+# คำว่า "Pink" และ "Green" ต้องสะกดตัวใหญ่ตัวเล็กตามคลังตีกรอบบนเว็บห้ามเพี้ยนเด็ดขาด!
 TARGET_CLASSES = ["Pink", "Green"]
 
 if "sim_status" not in st.session_state:
@@ -49,13 +50,13 @@ col_cam, col_result = st.columns([3, 2])
 with col_cam:
     st.subheader("📸 ข้อ 4: หน้าต่างดึงภาพจากกล้องเว็บแคม")
     
-    # ดึงระบบกล้องหน้าเว็บเบราว์เซอร์ของ Streamlit ป้องกันระบบคลาวด์ล็อกฮาร์ดแวร์
+    # 💡 ปรับมาใช้กล้องถ่ายภาพผ่านเบราว์เซอร์แทน cv2.VideoCapture เพื่อทะลวงบล็อกระบบรักษาความปลอดภัยของคลาวด์
     img_file = st.camera_input("📸 เล็งปากกาชมพู-เขียวให้อยู่ในหน้าจอ แล้วกดถ่ายภาพเพื่อส่งให้ AI ตรวจได้เลยครับพี่!")
 
     if img_file is not None and model is not None:
         pil_img = Image.open(img_file)
         
-        # ส่งภาพไปให้สมองกล AI v5 สแกนตรวจจับ (ตั้งค่าความมั่นใจไว้ที่ 30% ตามเดิมครับ)
+        # ส่งภาพไปให้สมองกล AI v5 สแกนตรวจจับ (ตั้งค่าความมั่นใจไว้ที่ 30%)
         predictions = model.predict(pil_img, confidence=30).json()
         
         draw_img = pil_img.copy()
@@ -63,7 +64,7 @@ with col_cam:
         from PIL import ImageDraw, ImageFont
         draw = ImageDraw.Draw(draw_img)
         
-        # 🛠️ ใช้ระบบ Set เพื่อเก็บชื่อคลาสแบบไม่ซ้ำสี ป้องกันพนักงานโกงยัดสีเดิมมา 2 แท่ง
+        # 🛠️ ใช้ระบบ Set เพื่อล็อกชื่อคลาสแบบไม่ซ้ำสี ป้องกันพนักงานยัดชมพูมา 2 แท่งแล้วระบบเอ๋อให้ผ่าน
         detected_set = set()
         detected_count = 0
         
@@ -73,38 +74,37 @@ with col_cam:
                 y = det["y"]
                 w = det["width"]
                 h = det["height"]
-                label = det["class"] # ดึงข้อความ Wording ชื่อคลาสย่อยที่ AI ตรวจเจอสดๆ ("Pink" หรือ "Green")
+                label = det["class"] # 🔴 ระบบดึง Wording ชื่อคลาสที่ AI พ่นออกมาออโต้ ("Pink" หรือ "Green")
                 conf = det["confidence"]
                 
-                # บันทึกชื่อคลาสและนับจำนวนจริงที่เจอ
                 detected_set.add(label)
                 detected_count += 1
                 
-                # คำนวณพิกัดเพื่อวาดเส้นกรอบสี่เหลี่ยม
+                # คำนวณพิกัดเพื่อขีดเส้นกรอบสี่เหลี่ยมลงบนรูปภาพ
                 x1 = int(x - w/2)
                 y1 = int(y - h/2)
                 x2 = int(x + w/2)
                 y2 = int(y + h/2)
                 
-                # 🛠️ วาดเส้นกรอบสีส้มหนาๆ ครอบตัววัตถุ
+                # วาดเส้นกรอบหนา ๆ ครอบวัตถุทุกชิ้นพร้อมกัน (ไม่จำกัดโควตาชิ้นงานแล้ว)
                 draw.rectangle([x1, y1, x2, y2], outline="#ff5722", width=6)
                 
-                # 🛠️ พ่นสีเขียน Wording ชื่อคลาสพร้อมเปอร์เซ็นต์ความมั่นใจแปะบนหัวกล่องรูปภาพจริง
+                # พ่นข้อความ Wording ชื่อสีพร้อมเปอร์เซ็นต์ความแม่นยำแปะบนตัวกล่องชิ้นงาน
                 text_content = f"{label} {conf*100:.1f}%"
                 draw.text((x1 + 5, y1 + 5), text_content, fill="#ffffff")
                 
-        # 🛠️ อัปเดตยอดนับและวิเคราะห์ตรรกะ ผิด-ถูก (OK/NG) แบบอัจฉริยะดักทางสับขาหลอก
+        # อัปเดตยอดการนับวัตถุจริงโชว์บนหน้าจอ
         st.session_state.sim_count = detected_count
         
-        # เงื่อนไขเหล็ก: ต้องเจอคำว่า "Pink" และคำว่า "Green" ครบทั้งคู่พร้อมกันจริง ๆ ถึงจะให้ผ่าน!
+        # 🛠️ ปรับตรรกะเหล็ก: ต้องตรวจเจอคำว่า "Pink" และคำว่า "Green" พร้อมกันคู่กันจริง ๆ ถึงจะขึ้น PASS
         if "Pink" in detected_set and "Green" in detected_set:
             st.session_state.sim_status = "OK"
         elif detected_count > 0:
-            st.session_state.sim_status = "NG" # เจอชิ้นเดียว หรือเจอสีซ้ำกันปัดเป็นของขาดทันที!
+            st.session_state.sim_status = "NG" # เจอชิ้นเดียว หรือเจอสีซ้ำกัน ปรับเป็นของขาดทันที!
         else:
             st.session_state.sim_status = "READY"
             
-        # โชว์รูปภาพที่ AI ตีกรอบพ่นข้อความเสร็จสรรพขึ้นกระดานแดชบอร์ด
+        # แสดงรูปภาพที่ AI ตีกรอบพ่นข้อความเสร็จเรียบร้อยแล้วขึ้นหน้าจอแดชบอร์ด
         st.image(draw_img, caption="🎯 ผลลัพธ์การสแกนตรวจจับจากสมองกล AI v5", use_container_width=True)
 
 with col_result:
@@ -123,7 +123,7 @@ with col_result:
         st.markdown(
             "<div style='background-color:#ef4444; padding:20px; border-radius:10px; text-align:center;'> "
             "<h1 style='color:white; margin:0;'>REJECT (NG) 🚨</h1>"
-            "<p style='color:white; margin:0; font-size:18px;'>พบสิ่งผิดปกติ! วัตถุขาดหายไปบางสี หรือชิ้นงานไม่ครบถ้วนตามสเปก</p>"
+            "<p style='color:white; margin:0; font-size:18px;'>พบสิ่งผิดปกติ! วัตถุขาดหายไปบางสี หรือชิ้นงานไม่ครบถ้วนตาม Standard</p>"
             "</div>", unsafe_allow_html=True
         )
     else:
@@ -135,9 +135,9 @@ with col_result:
         )
 
     st.write("")
-    st.metric(label="จำนวนปากกาทีระบบสแกนเจอในกล่อง ณ ตอนนี้", value=f"{st.session_state.sim_count} แท่ง")
+    st.metric(label="... จำนวนปากกาทีระบบสแกนเจอในกล่อง ณ ตอนนี้ ...", value=f"{st.session_state.sim_count} แท่ง")
     
-    # 🛠️ ตารางเช็กชื่อคลาสย่อยอัปเดตสถานะสดตามสีที่สแกนเจอจริงบนหน้างาน
+    # แสดงสถานะแยกแยะอัปเดตสดตามจริงอ้างอิงจากรายชื่อ Set
     st.write("**สถานะการแยกแยะชิ้นงานย่อยยึดตามสมองกล AI:**")
     for item in TARGET_CLASSES:
         if img_file is not None and 'detected_set' in locals() and item in detected_set:
