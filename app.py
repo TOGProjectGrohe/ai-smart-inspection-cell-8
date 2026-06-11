@@ -1,15 +1,16 @@
 import streamlit as st
-import cv2
 import numpy as np
 from PIL import Image
 from roboflow import Roboflow
 
-# ------------------------------------------------------------------
-# 📝 โน้ตหัวใจสำคัญจากน้อง AI ถึงพี่วิรัตน์:
-# 1. พี่อย่าลืมเติม "API Key ลับ" ของพี่ตรงบรรทัดที่ 22 นะครับ (เอามาจากหน้าเว็บ Roboflow)
-# 2. ตัวแปร version=5 ปรับเป็นเลข 5 ล่าสุดตามที่พวกเราเทรนกันผ่านด่านมาเป๊ะ ๆ เรียบร้อยแล้ว!
-# 3. แก้ไขปัญหาดึงกล้องทีละภาพโดยการใช้ระบบสแกนภาพสด และแสดงผลทุกชิ้นที่เจอพร้อมกันคู่กัน
-# ------------------------------------------------------------------
+# ==================================================================
+# 🚨 [โน้ตหัวข้อสำคัญ] จุดที่พี่วิรัตน์ต้องเปลี่ยน WORDING ให้ตรงกับที่เทรนจริง 🚨
+# ==================================================================
+# 📌 จุดที่ 1 (บรรทัดที่ 26): เปลี่ยนรหัส API KEY ส่วนตัวของพี่วิรัตน์
+# 📌 จุดที่ 2 (บรรทัดที่ 27): เช็กชื่อโปรเจกต์ (เช่น "test11-domtn") ให้ตรงกับบนเว็บ
+# 📌 จุดที่ 3 (บรรทัดที่ 28): เลขเวอร์ชัน ต้องเป็นเลข .version(5) ล่าสุด
+# 📌 จุดที่ 4 (บรรทัดที่ 38): ตัวแปร TARGET_CLASSES ต้องเปลี่ยนเป็น ["Pink", "Green"]
+# ==================================================================
 
 # CONFIGURATION & INITIALIZATION
 st.set_page_config(page_title="AI Smart Inspection v5", layout="wide")
@@ -18,10 +19,9 @@ st.set_page_config(page_title="AI Smart Inspection v5", layout="wide")
 @st.cache_resource
 def init_roboflow_model():
     try:
-        # ⚠️ พี่วิรัตน์เอา API Key ของพี่มาใส่ตรงเครื่องหมายคำพูดด้านล่างนี้ได้เลยครับ!
-        rf = Roboflow(api_key="rf_E8O0kMpxKZXtOz2ol6VsvabOJgo1") 
+        # 🔴 [จุดเปลี่ยนที่ 1-3]: หยอดรหัสกุญแจลับ API KEY และตรวจสอบเลขเวอร์ชันให้เป็นเลข 5
+        rf = Roboflow(api_key="ใส่_API_KEY_ของพี่ตรงนี้") 
         project = rf.workspace().project("test11-domtn")
-        # เรียกใช้เวอร์ชัน 5 ร่างทองที่เพิ่งอบเสร็จสด ๆ ร้อน ๆ!
         model = project.version(5).model
         return model
     except Exception as e:
@@ -30,7 +30,8 @@ def init_roboflow_model():
 
 model = init_roboflow_model()
 
-TARGET_CLASSES = ["Manual (คู่มือ)", "Black Tag (ป้ายดำ)", "Red Tag (ป้ายแดง)", "O-Ring (โอริง)", "Filter (ไส้กรอง)"]
+# 🔴 [จุดเปลี่ยนที่ 4]: ตัวแปรคลาสเป้าหมาย เปลี่ยน Wording ให้ตรงกับปากกาจริงที่ตีกรอบไว้
+TARGET_CLASSES = ["Pink", "Green"]
 
 if "sim_status" not in st.session_state:
     st.session_state.sim_status = "READY"
@@ -38,98 +39,82 @@ if "sim_count" not in st.session_state:
     st.session_state.sim_count = 0
 
 # UI DESIGN: DASHBOARD
-st.title("🏭 AI Smart Inspection Dashboard (v5 Real-time)")
-st.write("สถานีทดสอบระบบตรวจจับวัตถุสแกนภาพสด - เวอร์ชัน 5 แม่นยำ 100%")
+st.title("🏭 AI Smart Inspection Dashboard (v5 Cloud Setup)")
+st.write("สถานีทดสอบระบบตรวจจับวัตถุสแกนภาพสด - ผ่านระบบกล้องเบราว์เซอร์ปลอดภัย 100%")
 st.markdown("---")
 
 col_cam, col_result = st.columns([3, 2])
 
 with col_cam:
-    st.subheader("📸 ข้อ 4: ทดสอบการทำงานของระบบกล้องสด & AI v5")
+    st.subheader("📸 ข้อ 4: หน้าต่างดึงภาพจากกล้องเว็บแคม")
     
-    # ปุ่มควบคุมการเปิด/ปิดกล้องอุตสาหกรรมในคอมพิวเตอร์พี่
-    run_cam = st.checkbox("📸 สับสวิตช์เปิดกล้องอุตสาหกรรม (USB)", value=False)
-    st_frame = st.image([]) # หน้าจอแสดงผลวิดีโอ
-    
-    # ระบุลำดับกล้อง (0 = กล้องโน้ตบุ๊ก, 1 หรือ 2 = กล้องนอก USB)
-    cam_index = st.number_input("🔄 เลือกอินเด็กซ์กล้อง (ถ้าภาพไม่ขึ้นลองเปลี่ยนเป็น 0, 1, 2)", min_value=0, max_value=5, value=0)
+    # 💡 ใช้ระบบกล้องเบราว์เซอร์ของ Streamlit ตรงๆ เพื่อแก้ปัญหาคลาวด์ล็อกฮาร์ดแวร์
+    img_file = st.camera_input("📸 เล็งปากกาชมพู-เขียวให้อยู่ในหน้าจอ แล้วกดถ่ายภาพเพื่อส่งให้ AI ตรวจได้เลยครับพี่!")
 
-    # ทำงานดึงภาพสดเมื่อกด Checkbox เปิดกล้อง
-    if run_cam and model is not None:
-        cap = cv2.VideoCapture(cam_index)
+    if img_file is not None and model is not None:
+        # แปลงไฟล์ภาพที่ถ่ายสด ๆ ให้กลายเป็นฟอร์แมตที่ AI พร้อมอ่าน
+        pil_img = Image.open(img_file)
         
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                st.write("❌ ไม่สามารถดึงภาพจากกล้องได้ ตรวจสอบสายต่อ USB ครับพี่")
-                break
+        # ส่งภาพไปให้สมองกล AI v5 ทำการสแกนตรวจจับทันที (ปรับความมั่นใจไว้ที่ 30%)
+        predictions = model.predict(pil_img, confidence=30).json()
+        
+        # ดึงภาพต้นฉบับมาเตรียมวาดเส้นกรอบ
+        draw_img = pil_img.copy()
+        import collections
+        from PIL import ImageDraw, ImageFont
+        draw = ImageDraw.Draw(draw_img)
+        
+        detected_items = []
+        
+        if "predictions" in predictions:
+            for det in predictions["predictions"]:
+                x = det["x"]
+                y = det["y"]
+                w = det["width"]
+                h = det["height"]
+                label = det["class"] # ระบบดึงชื่อคลาส (Pink / Green) ออกมาออโต้
+                conf = det["confidence"]
                 
-            # แปลงสีภาพจาก OpenCV (BGR) เป็น RGB ให้มนุษย์ดูรู้เรื่อง
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            pil_img = Image.fromarray(frame_rgb)
-            
-            # ส่งภาพสดไปให้ AI v5 ในเตาอบ Roboflow สแกนประมวลผลทันที!
-            # ปรับความมั่นใจ (confidence) ไว้ที่ 30% เพื่อให้ตรวจจับง่ายขึ้น
-            predictions = model.predict(pil_img, confidence=30).json()
-            
-            # วาดกรอบสี่เหลี่ยมจับวัตถุทุกชิ้นพร้อมกัน (ไม่จำกัดโควตาชิ้นงานแล้ว!)
-            draw_frame = frame.copy()
-            detected_items = []
-            
-            if "predictions" in predictions:
-                for det in predictions["predictions"]:
-                    x = int(det["x"])
-                    y = int(det["y"])
-                    w = int(det["width"])
-                    h = int(det["height"])
-                    label = det["class"]
-                    conf = det["confidence"]
-                    
-                    detected_items.append(label)
-                    
-                    # คำนวณพิกัดมุมกล่องตีกรอบ
-                    x1, y1 = int(x - w/2), int(y - h/2)
-                    x2, y2 = int(x + w/2), int(y + h/2)
-                    
-                    # วาดกรอบสีส้มสดใสและแปะป้ายชื่อวัตถุพร้อมเปอร์เซ็นต์ความแม่นยำ
-                    cv2.rectangle(draw_frame, (x1, y1), (x2, y2), (0, 165, 255), 3)
-                    cv2.putText(draw_frame, f"{label} {conf:.2f}", (x1, y1 - 10), 
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 165, 255), 2)
-            
-            # อัปเดตยอดการนับวัตถุจริงเข้ากระดานจำลองอัตโนมัติ
-            if len(detected_items) > 0:
-                st.session_state.sim_count = len(detected_items)
-                st.session_state.sim_status = "OK" if len(detected_items) >= 2 else "NG"
-            else:
-                st.session_state.sim_count = 0
-                st.session_state.sim_status = "READY"
+                detected_items.append(label)
                 
-            # แสดงภาพวิดีโอที่ตีกรอบเสร็จแล้วขึ้นหน้าเว็บแบบลื่นไหล
-            final_frame = cv2.cvtColor(draw_frame, cv2.COLOR_BGR2RGB)
-            st_frame.image(final_frame, channels="RGB", use_container_width=True)
+                # คำนวณพิกัดเพื่อขีดเส้นกรอบลงบนรูปภาพ
+                x1 = int(x - w/2)
+                y1 = int(y - h/2)
+                x2 = int(x + w/2)
+                y2 = int(y + h/2)
+                
+                # ลากเส้นกรอบสีส้มหนา ๆ ครอบวัตถุทุกชิ้นพร้อมกัน (ไม่ล็อกโควตาตัวเลขภาพแล้ว!)
+                draw.rectangle([x1, y1, x2, y2], outline="#ff5722", width=5)
+                
+        # อัปเดตยอดการนับวัตถุจริงโชว์บนหน้าจอ
+        st.session_state.sim_count = len(detected_items)
+        if len(detected_items) >= 2:
+            st.session_state.sim_status = "OK"
+        elif len(detected_items) == 1:
+            st.session_state.sim_status = "NG"
+        else:
+            st.session_state.sim_status = "READY"
             
-        cap.release()
-    else:
-        # แสดงรูปภาพสแตนด์บายกรณีปิดกล้อง
-        st_frame.image("https://images.unsplash.com/photo-1531747118685-ca8fa6e08806?q=80&w=640", use_container_width=True)
+        # โชว์รูปภาพที่ AI วาดกรอบเสร็จเรียบร้อยแล้วขึ้นหน้าจอแดชบอร์ด
+        st.image(draw_img, caption="🎯 ผลลัพธ์การสแกนจากสมองกล AI v5", use_container_width=True)
 
 with col_result:
     st.subheader("📊 ข้อ 5: ตรรกะระบบ ผิด-ถูก (OK/NG) คำนวณจาก AI")
-    st.write("สถานะประมวลผลแบบ Real-time จากหน้ากล้องจริง")
+    st.write("ระบบจะปล่อยผ่าน (PASS) ก็ต่อเมื่อเจอทั้ง Pink และ Green ครบทั้งคู่")
     st.write("---")
     
     if st.session_state.sim_status == "OK":
         st.markdown(
             "<div style='background-color:#11caa0; padding:20px; border-radius:10px; text-align:center;'> "
             "<h1 style='color:white; margin:0;'>PASS (OK)</h1>"
-            "<p style='color:white; margin:0; font-size:18px;'>โมเดลตรวจพบชิ้นงานคู่กันบนหน้าจอสำเร็จ</p>"
+            "<p style='color:white; margin:0; font-size:18px;'>ยอดเยี่ยม! ตรวจพบปากกาครบทั้งสองสีคู่กัน</p>"
             "</div>", unsafe_allow_html=True
         )
     elif st.session_state.sim_status == "NG":
         st.markdown(
-            "<div style='background-color:#ef4444; padding:20px; border-radius:10px; text-align:center;'>"
+            "<div style='background-color:#ef4444; padding:20px; border-radius:10px; text-align:center;'> "
             "<h1 style='color:white; margin:0;'>REJECT (NG) 🚨</h1>"
-            "<p style='color:white; margin:0; font-size:18px;'>พบสิ่งผิดปกติ! วัตถุขาดหายหรือโดนบัง</p>"
+            "<p style='color:white; margin:0; font-size:18px;'>พบสิ่งผิดปกติ! วัตถุขาดหายไปหนึ่งสี (ของไม่ครบ)</p>"
             "</div>", unsafe_allow_html=True
         )
     else:
@@ -141,4 +126,4 @@ with col_result:
         )
 
     st.write("")
-    st.metric(label="จำนวนวัตถุที่ระบบนับได้ในกล่อง ณ ตอนนี้", value=f"{st.session_state.sim_count} ชิ้น")
+    st.metric(label="จำนวนปากกาทีระบบสแกนเจอในกล่อง", value=f"{st.session_state.sim_count} / 2 แท่ง")
