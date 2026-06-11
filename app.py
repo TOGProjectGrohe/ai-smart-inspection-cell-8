@@ -20,7 +20,7 @@ st.set_page_config(page_title="AI Smart Inspection v5", layout="wide")
 def init_roboflow_model():
     try:
         # 🔴 [จุดเปลี่ยนที่ 1-3]: หยอดรหัสกุญแจลับ API KEY และตรวจสอบเลขเวอร์ชันให้เป็นเลข 5
-        rf = Roboflow(api_key="ใส่_API_KEY_ของพี่ตรงนี้") 
+        rf = Roboflow(api_key="rf_E8O0kMpxKZXtOz2ol6VsvabOJgo1") 
         project = rf.workspace().project("test11-domtn")
         model = project.version(5).model
         return model
