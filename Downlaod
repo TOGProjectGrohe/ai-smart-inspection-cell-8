@@ -1,0 +1,10 @@
+from roboflow import Roboflow
+
+# ใช้ Private API Key ของพี่ที่หาเจอ ลักลอบดาวน์โหลดก้อนสมองกล v5 ลงมาในคอม
+rf = Roboflow(api_key="rf_E8O0kMpxKZXtOz2ol6VsvabOJgo1")
+project = rf.workspace().project("test11-domtn")
+version = project.version(5)
+
+# สั่งให้มันดาวน์โหลดก้อนเนื้อโมเดลฟอร์แมต YOLOv8 ออกมาเก็บในเครื่องคอมพี่ดื้อๆ!
+version.download("yolov8")
+print("🔥 สำเร็จแล้วพี่วิรัตน์! ไฟล์สมองกลวิ่งลงมาอยู่ในเครื่องคอมพี่เรียบร้อยแล้ว!")
